@@ -4,6 +4,14 @@ use num::complex::Complex;
 
 use wasm_bindgen::prelude::*;
 
+
+// A macro to provide `println!(..)`-style syntax for `console.log` logging.
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
+
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
 #[cfg(feature = "wee_alloc")]
@@ -14,7 +22,8 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub struct MandelbrotCanvas {
     width: u32,
     height: u32,
-    // zoom: f64,
+    zoom: f64,
+    center: (f64, f64),
     escape_times: Vec<u8>,
     pixels: Vec<u8>,
 }
@@ -22,28 +31,28 @@ pub struct MandelbrotCanvas {
 #[wasm_bindgen]
 impl MandelbrotCanvas {
     pub fn new(width: u32, height: u32) -> MandelbrotCanvas {
-        // TODO: init escape times
         MandelbrotCanvas {
             width,
             height,
-            // zoom: 1./width as f64,
+            zoom: 1./width as f64,
+            center: (-1., 0.),
             escape_times: vec![0; (width*height) as usize],
-            pixels: vec![0; (4*width*height) as usize]
+            pixels: vec![0; (4*width*height) as usize],
         }
     }
 
-    pub fn mandelbrot(&mut self) {
-        let zoom = 1./self.width as f64;
-        let x = -1.;
-        let y = 0.;
+    pub fn center_on_pixel(&mut self, i: u32, j: u32) {
+        let (x, y) = self.pixel_to_position(i, j);
+        self.center = (x, y);
+    }
 
+    pub fn mandelbrot(&mut self) {
         for j in 0..self.height {
             for i in 0..self.width {
                 let idx = (j*self.width + i) as usize;
 
-                let xp = (i as f64 - self.width as f64 / 2.) as f64 * zoom + x;
-                let yp = (j as f64 - self.height as f64 / 2.) as f64 * zoom + y;
-                let p = Complex::new(xp, yp);
+                let (x, y) = self.pixel_to_position(i, j);
+                let p = Complex::new(x, y);
 
                 self.escape_times[idx] = MandelbrotCanvas::time_to_diverge(p);
             }
@@ -56,6 +65,15 @@ impl MandelbrotCanvas {
         self.pixels.as_ptr()
     }
 
+    fn pixel_to_position(&self, i: u32, j: u32) -> (f64, f64) {
+        let (cx, cy) = self.center;
+
+        let x = (i as f64 - self.width as f64 / 2.) * self.zoom + cx;
+        let y = (j as f64 - self.height as f64 / 2.) * self.zoom + cy;
+
+        (x, y)
+    }
+
     fn update_pixels(&mut self) {
         for j in 0..self.height {
             for i in 0..self.width {
@@ -65,10 +83,6 @@ impl MandelbrotCanvas {
                 self.pixels[4*idx+1] = 255 - self.escape_times[idx];
                 self.pixels[4*idx+2] = 255 - self.escape_times[idx];
                 self.pixels[4*idx+3] = 255;
-                // self.pixels[4*idx] = 200;
-                // self.pixels[4*idx+1] = 200;
-                // self.pixels[4*idx+2] = 200;
-                // self.pixels[4*idx+3] = 200;
             }
         }
     }
