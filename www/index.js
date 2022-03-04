@@ -1,15 +1,16 @@
 import {MandelbrotCanvas} from "wasmbrot";
 import { memory } from "wasmbrot/wasmbrot_bg";
 
-const width = 1000;
-const height = 1000;
-
-let mandelbrot = MandelbrotCanvas.new(width, height)
 
 const canvas = document.getElementById("mandelbrot-canvas");
 const ctx = canvas.getContext('2d');
 
+const width = canvas.width;
+const height = canvas.height;
+
+let mandelbrot = MandelbrotCanvas.new(width, height)
 mandelbrot.mandelbrot();
+canvas.onwheel = zoom;
 draw();
 
 function draw() {
@@ -38,3 +39,13 @@ canvas.addEventListener("click", event => {
 
     draw();
 });
+
+function zoom(event) {
+    event.preventDefault();
+
+    mandelbrot.zooming(event.deltaY);
+    mandelbrot.mandelbrot();
+    draw();
+}
+
+

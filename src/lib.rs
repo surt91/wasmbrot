@@ -4,6 +4,8 @@ use num::complex::Complex;
 
 use wasm_bindgen::prelude::*;
 
+use web_sys;
+
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -63,6 +65,14 @@ impl MandelbrotCanvas {
 
     pub fn pixels(&self) -> *const u8 {
         self.pixels.as_ptr()
+    }
+
+    pub fn zooming(&mut self, amount: isize) {
+        if amount > 0 {
+            self.zoom *= 1.1;
+        } else {
+            self.zoom /= 1.1;
+        }
     }
 
     fn pixel_to_position(&self, i: u32, j: u32) -> (f64, f64) {
