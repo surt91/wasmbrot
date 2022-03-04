@@ -11,6 +11,7 @@ const height = canvas.height;
 let mandelbrot = MandelbrotCanvas.new(width, height)
 mandelbrot.mandelbrot();
 canvas.onwheel = zoom;
+canvas.onclick = click;
 draw();
 
 function draw() {
@@ -20,7 +21,7 @@ function draw() {
     ctx.putImageData(image, 0, 0);
 }
 
-canvas.addEventListener("click", event => {
+function center_on_event(event) {
     const boundingRect = canvas.getBoundingClientRect();
 
     const scaleX = canvas.width / boundingRect.width;
@@ -35,13 +36,20 @@ canvas.addEventListener("click", event => {
     console.log(x, y);
 
     mandelbrot.center_on_pixel(x, y);
+}
+
+function click(event) {
+    center_on_event(event);
+
     mandelbrot.mandelbrot();
 
     draw();
-});
+}
 
 function zoom(event) {
     event.preventDefault();
+
+    // TODO: zoom such that the position of the cursor stays at the same place in the fractal
 
     mandelbrot.zooming(event.deltaY);
     mandelbrot.mandelbrot();
